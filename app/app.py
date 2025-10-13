@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Создание базы данных
 def init_db():
-    conn = sqlite3.connect('business_trips.db')
+    conn = sqlite3.connect('business_trips.db', check_same_thread=False)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS business_trips (
@@ -37,11 +37,10 @@ COUNTRIES = ['Россия', 'Белоруссия', 'Казахстан', 'Кы
 # Главная страница - список командировок
 @app.route('/')
 def index():
-    conn = sqlite3.connect('business_trips.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM business_trips')
-    trips = cursor.fetchall()
-    conn.close()
+    with sqlite3.connect('business_trips.db', timeout=10) as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM business_trips')
+        trips = cursor.fetchall()
     return render_template('index.html', trips=trips, countries=COUNTRIES)
 
 # Страница создания/редактирования командировки
@@ -50,11 +49,10 @@ def index():
 def trip_form(trip_id=None):
     trip = None
     if trip_id:
-        conn = sqlite3.connect('business_trips.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM business_trips WHERE id = ?', (trip_id,))
-        trip = cursor.fetchone()
-        conn.close()
+        with sqlite3.connect('business_trips.db', timeout=10) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM business_trips WHERE id = ?', (trip_id,))
+            trip = cursor.fetchone()
     return render_template('trip_form.html', trip=trip, countries=COUNTRIES)
 
 # Сохранение командировки
@@ -64,57 +62,54 @@ def save_trip():
     trip_id = data.get('trip_id')
     
     if trip_id:  # Редактирование существующей
-        conn = sqlite3.connect('business_trips.db')
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE business_trips SET 
-            full_name=?, country=?, city=?, start_date=?, end_date=?, 
-            organization=?, address=?, purpose=?,
-            ticket_to_type=?, ticket_to_details=?,
-            ticket_back_type=?, ticket_back_details=?,
-            hotel=?
-            WHERE id=?
-        ''', (
-            data.get('full_name', ''), data.get('country', ''), data.get('city', ''),
-            data.get('start_date', ''), data.get('end_date', ''),
-            data.get('organization', ''), data.get('address', ''), data.get('purpose', ''),
-            data.get('ticket_to_type', ''), data.get('ticket_to_details', ''),
-            data.get('ticket_back_type', ''), data.get('ticket_back_details', ''),
-            data.get('hotel', ''), trip_id
-        ))
-        conn.commit()
-        conn.close()
+        with sqlite3.connect('business_trips.db', timeout=10) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE business_trips SET 
+                full_name=?, country=?, city=?, start_date=?, end_date=?, 
+                organization=?, address=?, purpose=?,
+                ticket_to_type=?, ticket_to_details=?,
+                ticket_back_type=?, ticket_back_details=?,
+                hotel=?
+                WHERE id=?
+            ''', (
+                data.get('full_name', ''), data.get('country', ''), data.get('city', ''),
+                data.get('start_date', ''), data.get('end_date', ''),
+                data.get('organization', ''), data.get('address', ''), data.get('purpose', ''),
+                data.get('ticket_to_type', ''), data.get('ticket_to_details', ''),
+                data.get('ticket_back_type', ''), data.get('ticket_back_details', ''),
+                data.get('hotel', ''), trip_id
+            ))
+            conn.commit()
     else:  # Создание новой
-        conn = sqlite3.connect('business_trips.db')
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO business_trips 
-            (full_name, country, city, start_date, end_date, 
-            organization, address, purpose,
-            ticket_to_type, ticket_to_details,
-            ticket_back_type, ticket_back_details, hotel)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            data.get('full_name', ''), data.get('country', ''), data.get('city', ''),
-            data.get('start_date', ''), data.get('end_date', ''),
-            data.get('organization', ''), data.get('address', ''), data.get('purpose', ''),
-            data.get('ticket_to_type', ''), data.get('ticket_to_details', ''),
-            data.get('ticket_back_type', ''), data.get('ticket_back_details', ''),
-            data.get('hotel', '')
-        ))
-        conn.commit()
-        conn.close()
+        with sqlite3.connect('business_trips.db', timeout=10) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO business_trips 
+                (full_name, country, city, start_date, end_date, 
+                organization, address, purpose,
+                ticket_to_type, ticket_to_details,
+                ticket_back_type, ticket_back_details, hotel)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                data.get('full_name', ''), data.get('country', ''), data.get('city', ''),
+                data.get('start_date', ''), data.get('end_date', ''),
+                data.get('organization', ''), data.get('address', ''), data.get('purpose', ''),
+                data.get('ticket_to_type', ''), data.get('ticket_to_details', ''),
+                data.get('ticket_back_type', ''), data.get('ticket_back_details', ''),
+                data.get('hotel', '')
+            ))
+            conn.commit()
     
     return redirect(url_for('index'))
 
 # Удаление командировки
 @app.route('/delete/<int:trip_id>')
 def delete_trip(trip_id):
-    conn = sqlite3.connect('business_trips.db')
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM business_trips WHERE id = ?', (trip_id,))
-    conn.commit()
-    conn.close()
+    with sqlite3.connect('business_trips.db', timeout=10) as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM business_trips WHERE id = ?', (trip_id,))
+        conn.commit()
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
