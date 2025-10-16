@@ -212,3 +212,59 @@ curl -X POST http://localhost:11434/api/embeddings \
 `docker exec -u node -it n8n-n8n-1 n8n user-management:reset` ресет пароля для n8n
 
 `npx @playwright/mcp  --port 8931 --host 0.0.0.0 --allowed-hosts '*'`
+
+```yaml
+name: DeepSeek Assistant
+version: 1.0.0
+schema: v1
+models:
+  - name: DeepSeek-V3.2
+    provider: openai
+    model: deepseek-ai/DeepSeek-V3.2-Exp
+    apiKey: ${{ secrets.DEEPINFRA_API_KEY }}
+    apiBase: https://api.deepinfra.com/v1/openai
+    contextLength: 128000
+    maxTokens: 4096
+    temperature: 0.7
+    roles:
+      - chat
+      - edit
+      - apply
+  - name: Qwen3-4b
+    provider: ollama
+    model: qwen3:4b-instruct-2507-q8_0
+    apiBase: http://localhost:11434
+    roles:
+      - chat
+      - edit
+mcpServers:
+  - name: playwright-http
+    type: streamable-http
+    url: http://localhost:8931/mcp
+  # - name: playwright
+  #   command: npx
+  #   args:
+  #     - "@playwright/mcp@latest"
+  # - name: docker-gateway
+  #   command: docker
+  #   args:
+  #     - mcp
+  #     - gateway
+  #     - run
+  #   env:
+  #     DOCKER_MCP_LOG_LEVEL: info
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase
+rules:
+  - "You are an expert developer assistant with access to browser automation tools"
+  - "When asked to perform browser tasks, use MCP tools - Playwright"
+  - "Provide step-by-step explanations of browser automation tasks"
+  - "Use structured responses when presenting data collected from websites"
+  - "Respond to user in Russian"
+```
