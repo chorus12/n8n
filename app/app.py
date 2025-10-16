@@ -112,5 +112,10 @@ def delete_trip(trip_id):
         conn.commit()
     return redirect(url_for('index'))
 
+# Обработчик для favicon.ico (чтобы избежать ошибки 404)
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 if __name__ == '__main__':
     app.run(debug=True)

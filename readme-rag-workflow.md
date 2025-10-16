@@ -210,3 +210,5 @@ curl -X POST http://localhost:11434/api/embeddings \
 
 ## Разное
 `docker exec -u node -it n8n-n8n-1 n8n user-management:reset` ресет пароля для n8n
+
+`npx @playwright/mcp  --port 8931 --host 0.0.0.0 --allowed-hosts '*'`
